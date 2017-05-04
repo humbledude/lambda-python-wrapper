@@ -2,6 +2,11 @@ import json
 import boto3
 import paramiko
 
+def get_key_from_s3(s3Bucket, s3Key, keyPath):
+    s3_client = boto3.client('s3')
+    s3_client.download_file(s3Bucket, s3Key, keyPath)
+
+
 def run_sh_on_ec2(keyPath, host, username, commands):
     k = paramiko.RSAKey.from_private_key_file(keyPath)
     c = paramiko.SSHClient()
@@ -34,6 +39,17 @@ def lambda_handler(event, context):
 
     private_ip = get_private_ip(message['EC2InstanceId'])
 
+    s3Bucket = 'bucket_name'
+    s3Key = 'key_name'
+    keyPath = '/tmp/key'
+    get_key_from_s3(s3Bucket, s3Key, keyPath)
+
+    host = private_ip
+    username = 'user_name'
+    commands = [
+        'ls -al'
+    ]
+    run_sh_on_ec2(keyPath, host, username, commands)
 
 # test
 if __name__ == '__main__':
@@ -42,13 +58,16 @@ if __name__ == '__main__':
     instance_id = sys.argv[1]
     private_ip = get_private_ip(instance_id)
 
-    key = sys.argv[2]
-    host = sys.argv[3]
-    username = sys.argv[4]
+    s3Bucket = sys.argv[2]
+    s3Key = sys.argv[3]
+    keyPath = sys.argv[4]
+    get_key_from_s3(s3Bucket, s3Key, keyPath)
+
+    host = sys.argv[5]
+    username = sys.argv[6]
     commands = [
         'ls -al'
     ]
-
-    run_sh_on_ec2(key, host, username, commands)
+    run_sh_on_ec2(keyPath, host, username, commands)
 
 
